@@ -12,12 +12,12 @@ Folgende Befehle können während des Spiels in der Kommandozeile eingegeben wer
 
 | Aktion      |Beschreibung|
 |-----------|------------|
-| a               | Der Spieler bewegt sich nach *links*                                                   |
-| d           | Der Spieler bewegt sich nach *rechts*                                                      |
-| w           | Der Spieler bewegt sich nach *oben*                                                      |
-| s             | Der Spieler bewegt sich nach *unten*                                                    |
-| i            | Der Spieler interagiert mit seiner Umgebung attackiert Monster, öffnet truhen           |
-| s         | Spiel speichern                                                                           |
+| a         | Der Spieler bewegt sich nach *links*                                                   |
+| d         | Der Spieler bewegt sich nach *rechts*                                                      |
+| w         | Der Spieler bewegt sich nach *oben*                                                        |
+| s         | Der Spieler bewegt sich nach *unten*                                                     |
+| i         | Der Spieler interagiert mit seiner Umgebung attackiert Monster, öffnet truhen             |
+| s         | Spiel speichern                                                                              |
 
 
 In einem *Hauptmenü* sind folgende Optionen verfügbar:
