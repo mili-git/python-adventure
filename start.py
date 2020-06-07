@@ -1,12 +1,14 @@
 from rich.console import Console
 from rich.panel import Panel
+from rich.table import Table
 from rich import print as rprint
 from os import system, name
 import random
+import json
 
 # Globale variablen
 console = Console()
-menu_text = "Wilkommen in Python Adventure!\n\n1: Spiel starten\n2: Spiel laden\n3: Highscore ansehen"
+menu_text = "Wilkommen in Python Adventure!\n\n1: Spiel starten\n2: Highscore ansehen"
 terminal_breite = console.size.width
 terminal_hoehe = console.size.height
 
@@ -40,19 +42,9 @@ loeschte_terminal_inhalt = 'clear'
 if name == 'nt':
     loeschte_terminal_inhalt = 'cls'
 
-spieler = {
-    "zeichen": symbol_spieler,
-    "x": 5,
-    "y": 12,
-    "leben" : 3,
-    # Die Anzahl Schritte werden als Liste gespeichert, jeder Index entspricht dabei einem Level
-    "anzahl_schritte": [0]
-}
-
 breite = 50
 hoehe = 15
 anzahl_aufnehmbare_leben = 5
-momentanes_level = 0 # Muss bei 0 beginnen, da es als Index in den "anzahl_schritten" verwendet wird.
 
 spiel_beenden = False
 
@@ -60,6 +52,20 @@ spiel_beenden = False
 # Diese Funktion zentriert einen Text
 def zentriere_text(text):
     return zentriere_text_ausdruck.format(text)
+
+
+def lade_daten_aus_json (pfad, standard_wert = []):
+    #https://www.programiz.com/python-programming/json
+    try:
+        with open(pfad, 'r') as datei:
+            return json.load(datei)
+    except Exception:
+        return standard_wert
+
+def schreibe_daten_in_json(pfad, daten):
+    #https://stackoverflow.com/questions/17043860/how-to-dump-a-dict-to-a-json-file
+    with open(pfad, 'w') as datei:
+        json.dump(daten, datei, indent = 4)
 
 def zahl_zwischen(min, max, zahl):
     if zahl < min:
@@ -185,19 +191,26 @@ def existiert_monster_auf_position(x, y, monster):
     return False
 
 
-def generiere_welt(anzahl_boden_flaechen, anzahl_monster):
+def generiere_welt(spieler, anzahl_boden_flaechen, anzahl_monster):
+    print("Volle Welt wird generiert...")
     welt = generiere_volle_welt()
+    print("Bodenflächen werden platziert...")
     welt = platziere_boden_flaechen(welt, anzahl_boden_flaechen)
+    print("Aufnehmbare Leben werden platziert...")
     welt = platziere_aufnehmbare_leben(welt)
+    print("Ziel wird platziert")
     welt = platziere_ziel(welt)
+    print("Platziere monster...")
     welt, monster = platziere_monster(anzahl_monster, welt)
 
     # Platziere Spieler
+    print("Platziere Spieler...")
     spieler["x"], spieler["y"] = platziere_spieler(welt)
-    return (welt, monster)
+    print("Welt ist fertig generiert...")
+    return (spieler, welt, monster)
 
 
-def zeichne_welt(welt, monster):
+def zeichne_welt(welt, monster, spieler):
     for y, reihe in enumerate(welt):
         reihe_text = ""
         for x, zeichen in enumerate(reihe):
@@ -212,7 +225,7 @@ def zeichne_welt(welt, monster):
                 reihe_text = reihe_text + zeichen
         rprint(reihe_text)
 
-def bewege_spieler(aktion, welt, monster):
+def bewege_spieler(aktion, spieler, welt, monster):
     neues_x = spieler["x"]
     neues_y = spieler["y"]
     if aktion == "w":
@@ -230,7 +243,7 @@ def bewege_spieler(aktion, welt, monster):
     spieler_darf_sich_bewegen = symbol != symbol_wand
     hat_sich_spieler_bewegt = spieler["x"] != neues_x or spieler["y"] != neues_y
     if spieler_darf_sich_bewegen and hat_sich_spieler_bewegt:
-        spieler["anzahl_schritte"][momentanes_level] += 1
+        spieler["anzahl_schritte"] += 1
         spieler["x"] = neues_x
         spieler["y"] = neues_y
 
@@ -246,7 +259,7 @@ def bewege_spieler(aktion, welt, monster):
             spieler["x"], spieler["y"] = platziere_spieler(welt)
 
 
-def bewege_monster(monster, welt):
+def bewege_monster(monster, welt, spieler):
     richtungen = ["norden", "osten", "westen", "sueden"]    
     for element in monster:
         neues_x = element["x"]
@@ -278,18 +291,18 @@ def bewege_monster(monster, welt):
                 spieler["x"], spieler["y"] = platziere_spieler(welt)
 
 
-def zeichne_leben():
+def zeichne_leben(spieler):
     lebens_anzeige = "Leben Spieler: [bold red]"
     for i in range(spieler["leben"]):
         lebens_anzeige = lebens_anzeige + symbol_leben + " "
     lebens_anzeige = lebens_anzeige + "[/bold red]"
     return lebens_anzeige
 
-def zeichne_spieler_informationen():
+def zeichne_spieler_informationen(spieler):
     spieler_informationen = ""
 
     # Zeichne das Leben des Spielers
-    spieler_informationen = spieler_informationen + zeichne_leben()
+    spieler_informationen = spieler_informationen + zeichne_leben(spieler)
     
     # Zeichne die Anzahl Schritte, welcher der Spieler vorgenommen hat (wird für High Score verwendet.)
     spieler_informationen = spieler_informationen + "\n\rAnzahl Spielzüge: " + str(spieler["anzahl_schritte"])
@@ -322,11 +335,15 @@ def zeige_hilfe_an():
         rprint(Panel(text))
         hilfe_schliessen = input("Um die Hilfe zu schliessen drücke bitte 'q': ").lower() == 'q'
 
-def generiere_welt_fuer_level():
-    if momentanes_level == 0:
-        anzahl_boden_flaechen = int(breite * hoehe * 0.5)
-        anzahl_monster = 5
-        return generiere_welt(anzahl_boden_flaechen, anzahl_monster)
+def generiere_welt_fuer_spieler(spieler):
+    if spieler["momentanes_level"] == 0:
+        anzahl_boden_flaechen = int(breite * hoehe * 0.45)
+        anzahl_monster = 10
+        return generiere_welt(spieler, anzahl_boden_flaechen, anzahl_monster)
+    elif spieler["momentanes_level"] == 1:
+        anzahl_boden_flaechen = int(breite * hoehe * 0.85)
+        anzahl_monster = 8
+        return generiere_welt(spieler, anzahl_boden_flaechen, anzahl_monster)
     else:
         return None
 
@@ -336,22 +353,54 @@ def zeige_alle_levels_geschafft_meldung():
 def zeige_gestorben_meldung():
     rprint(Panel(zentriere_text("Leider hast du verloren, versuch doch dein Glück erneut!!")))
 
+def highscore_speicher(spieler, highscores):
+    # Prüfe ob für dieses Level bereist Schritte gemacht wurden.
+    eintrag_bereits_vorhanden = False
+    for highscore in highscores:
+        # Es gibt bereits einen Eintrag für dieses Level, füge einfach einen neuen Eintrag
+        # für die Anzahl Schritte hinzu...
+        if highscore["level"] == spieler["momentanes_level"]:
+            highscore["anzahl_schritte"].append(spieler["anzahl_schritte"])
+            eintrag_bereits_vorhanden = True
+
+    # Für dieses Level gibt es noch keine Einträge, erstelle einen neuen
+    if not eintrag_bereits_vorhanden:
+        highscores.append({
+            "level": spieler["momentanes_level"],
+            "anzahl_schritte": [spieler["anzahl_schritte"]]
+        })
+
+    # Schreibe die Highscore Daten in die Datei
+    schreibe_daten_in_json("highscore.json", highscores)
+    return highscores
+
 def spiel_starten():
-    # Benutze die globale Variable momentanes level
-    global momentanes_level
+    spieler = {
+        "zeichen": symbol_spieler,
+        "x": 5,
+        "y": 12,
+        "leben" : 3,
+        "anzahl_schritte": 0,
+        "momentanes_level": 0
+    }
+
+    # Lade alle Daten aus der Highscore Datei
+    highscores = lade_daten_aus_json("highscore.json")
+
 
     alle_level_gemeister = False
     gestorben = False
-    
-    if generiere_welt_fuer_level() == None:
+
+    if generiere_welt_fuer_spieler(spieler) == None:
         alle_level_gemeister = True
     else:
-        welt, monster = generiere_welt_fuer_level()
+        spieler, welt, monster = generiere_welt_fuer_spieler(spieler)
+
 
     while not gestorben and not alle_level_gemeister:
         system(loeschte_terminal_inhalt)
-        zeichne_welt(welt, monster)
-        zeichne_spieler_informationen()
+        zeichne_welt(welt, monster, spieler)
+        zeichne_spieler_informationen(spieler)
 
         # Werte Aktion aus...
         aktion = console.input("Deine Aktion: ")
@@ -361,24 +410,27 @@ def spiel_starten():
         if aktion == "h":
             zeige_hilfe_an()
         
-        bewege_spieler(aktion, welt, monster)
+        bewege_spieler(aktion, spieler, welt, monster)
 
         # Prüfe ob sich der Spieler bereits beim Schloss befindet...
-        if symbol_in_welt(spieler["x"], spieler["y"], welt) == symbol_ziel:
-            momentanes_level += 1
-            # Initialisiere die Schritte für das nächste Level
-            spieler["anzahl_schritte"].append(0)
+        if symbol_in_welt(spieler["x"], spieler["y"], welt) == symbol_ziel:         
 
-            # TODO: Speichere den momentanen Zustand in ein JSON...
+            highscores = highscore_speicher(spieler, highscores)
+
+            # Der Spieler hat das nächste Level erreicht
+            spieler["momentanes_level"] += 1
+
+            # Initialisiere die Schritte für das nächste Level
+            spieler["anzahl_schritte"] = 0
 
             # Prüfe ob der Spieler alle Level gemeistert hat
-            if generiere_welt_fuer_level() == None:
+            if generiere_welt_fuer_spieler(spieler) == None:
                 alle_level_gemeister = True
             else:
                 # Generiere eine neue Welt mit Monstern etc.
-                welt, monster = generiere_welt_fuer_level()
+                spieler, welt, monster = generiere_welt_fuer_spieler(spieler)
 
-        bewege_monster(monster, welt)
+        bewege_monster(monster, welt, spieler)
 
         # Prüfe ob das Spiel beendet ist -> Der Spieler hat keine Leben mehr
         gestorben = spieler["leben"] <= 0
@@ -393,12 +445,27 @@ def spiel_starten():
 
     start()
 
-    
-def spiel_laden():
-    rprint("Spiel wird geladen...")
-
 def highscore_anzeigen():
-    rprint("Highscore wird angezeigt...")
+    # Lade alle Daten für den Highscore
+    highscores = lade_daten_aus_json("highscore.json")
+    # https://rich.readthedocs.io/en/latest/tables.html
+    highscore_table = Table(title="Highscore")
+
+    # Füge die relevanten Spalten der Tabelle hinzu...
+    highscore_table.add_column("Level", justify="left")
+    highscore_table.add_column("Anzahl Schritte", justify="right")
+
+    for highscore in highscores:
+        level = highscore["level"]
+        anzahl_schritte_liste = highscore["anzahl_schritte"]
+        for schritte in anzahl_schritte_liste:
+            highscore_table.add_row("Level " + str(level + 1), str(schritte))
+
+    beenden = False
+    while not beenden:
+        system(loeschte_terminal_inhalt)
+        console.print(highscore_table)
+        beenden = input("Drücke 'q' um zum Hauptmenü zurückzukehren: ").lower() == 'q'
 
 def start():
     # Zeige Hauptmenu an
@@ -409,14 +476,13 @@ def start():
     gueltige_eingabe = False
     while not gueltige_eingabe:
         auswahl = console.input("Bitte triff eine Auswahl: ")
-        gueltige_eingabe = auswahl == "1" or auswahl == "2" or auswahl == "3"
+        gueltige_eingabe = auswahl == "1" or auswahl == "2"
 
     if auswahl == "1":
         zeige_hilfe_an()
         spiel_starten()
     elif auswahl == "2":
-        spiel_laden()
-    elif auswahl == "3":
         highscore_anzeigen()
+        start()
 
 start()
