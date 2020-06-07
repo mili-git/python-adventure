@@ -192,7 +192,6 @@ def generiere_welt(anzahl_boden_flaechen, anzahl_monster):
 
     # Platziere Spieler
     spieler["x"], spieler["y"] = platziere_spieler(welt)
-
     return (welt, monster)
 
 
@@ -295,7 +294,35 @@ def zeichne_spieler_informationen():
     rprint(Panel(spieler_informationen))
 
 
+def hilfe_text():
+    hilfe_text = "Dies ist eine kurze Erklärung bzw. Hilfe zum Spiel\n\r"
+    hilfe_text = hilfe_text + "Du bist eine Schlange, welche sich ihre Weg ins Schloss bahnen muss, um ins nächste Level zu gelangen\n\r"
+    hilfe_text = hilfe_text + "Das Schloss wird jedoch von einer Horde von Drachen bewacht, weiche ihnen unbedingt aus!\n\r"
+    hilfe_text = hilfe_text + "Jedoch gibt es auch Licht am Ende des Tunnels. Auf dem Weg zum Schloss gibt es Lebenselixire, welche du aufsammeln kannst!\n\r"
+    hilfe_text = hilfe_text + "Das Spiel ist beendet, wenn du keine Leben mehr hast.\n\r"
+    hilfe_text = hilfe_text + "Das Ziel ist es möglichst viele Level mit so wenigen Schritten wie möglich zu absolvieren.\n\r"
+    hilfe_text = hilfe_text + "Eine High Score Übersicht mit den Anzahl Schritten pro Level kannst du unter [bold]Highscore ansehen[/bold] im Hauptmenü ansehen.\n\r"
+    hilfe_text = hilfe_text + "Dein Fortschritt wird jeweils beim Erreichen des Schloss gespeichert, streng dich also an!!\n\r"
+    hilfe_text = hilfe_text + "Jedes Level ist zufalls generiert, es stehen dir folgende Befehle zur Auswahl:\n\r"
+    hilfe_text = hilfe_text + "Mit [bold]w[/bold] bewegst du dich nach oben\n\r"
+    hilfe_text = hilfe_text + "Mit [bold]a[/bold] bewegst du dich nach links\n\r"
+    hilfe_text = hilfe_text + "Mit [bold]s[/bold] bewegst du dich nach unten\n\r"
+    hilfe_text = hilfe_text + "Mit [bold]d[/bold] bewegst du dich nach rechts\n\r"
+    hilfe_text = hilfe_text + "Mit [bold]h[/bold] kannst du jederzeit diese Hilfe anzeigen\n\r"
+    return hilfe_text
+
+def zeige_hilfe_an():
+    hilfe_schliessen = False
+    text = hilfe_text()
+    while not hilfe_schliessen:
+        system(loeschte_terminal_inhalt)
+        rprint(Panel(text))
+        hilfe_schliessen = input("Um die Hilfe zu schliessen drücke bitte 'q': ").lower() == 'q'
+
+
+
 def spiel_starten():
+    # Benutze die globale variable für spiel_beenden
     global spiel_beenden
     anzahl_boden_flaechen = int(breite * hoehe * 0.5)
     anzahl_monster = 5
@@ -310,11 +337,14 @@ def spiel_starten():
         # Werte Aktion aus...
         aktion = console.input("Deine Aktion: ")
         aktion = aktion.lower()
+
+        if aktion == "h":
+            zeige_hilfe_an()
         
         bewege_spieler(aktion, welt, monster)
         bewege_monster(monster, welt)
 
-        # Prüfe ob das Spiel beendet is -> Der Spieler hat keine Leben mehr
+        # Prüfe ob das Spiel beendet ist -> Der Spieler hat keine Leben mehr
         spiel_beenden = spieler["leben"] <= 0
 
     
@@ -335,6 +365,7 @@ while not gueltige_eingabe:
     gueltige_eingabe = auswahl == "1" or auswahl == "2" or auswahl == "3"
 
 if auswahl == "1":
+    zeige_hilfe_an()
     spiel_starten()
 elif auswahl == "2":
     spiel_laden()
