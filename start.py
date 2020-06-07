@@ -52,6 +52,9 @@ breite = 50
 hoehe = 15
 anzahl_aufnehmbare_leben = 5
 
+spiel_beenden = False
+
+
 # Diese Funktion zentriert einen Text
 def zentriere_text(text):
     return zentriere_text_ausdruck.format(text)
@@ -293,11 +296,12 @@ def zeichne_spieler_informationen():
 
 
 def spiel_starten():
+    global spiel_beenden
     anzahl_boden_flaechen = int(breite * hoehe * 0.5)
     anzahl_monster = 5
 
     welt, monster = generiere_welt(anzahl_boden_flaechen, anzahl_monster)
-    spiel_beenden = False
+
     while not spiel_beenden:
         system(loeschte_terminal_inhalt)
         zeichne_welt(welt, monster)
@@ -310,6 +314,8 @@ def spiel_starten():
         bewege_spieler(aktion, welt, monster)
         bewege_monster(monster, welt)
 
+        # Prüfe ob das Spiel beendet is -> Der Spieler hat keine Leben mehr
+        spiel_beenden = spieler["leben"] <= 0
 
     
 def spiel_laden():
