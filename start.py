@@ -17,14 +17,14 @@ symbol_boden = ":white_large_square:"
 symbol_wand = ":brick:"
 symbol_monster = ":dragon:"
 symbol_spieler = ":snake:"
+symbol_ziel = ":castle:"
 
 if not emoji_support:
-    
     symbol_boden = "."
     symbol_wand = "#"
     symbol_monster = "m"
     symbol_spieler = "@"
-
+    symbol_ziel = "%"
 
 # https://stackoverflow.com/questions/8907236/center-aligning-text-on-console-in-python
 zentriere_text_ausdruck = '{:^' + str(terminal_breite) + '}'
@@ -43,6 +43,9 @@ spieler = {
     "y": 12
 }
 
+breite = 50
+hoehe = 20
+
 # Diese Funktion zentriert einen Text
 def zentriere_text(text):
     return zentriere_text_ausdruck.format(text)
@@ -54,21 +57,21 @@ def zahl_zwischen(min, max, zahl):
         return max
     return zahl
 
-def symbol_in_welt(x, y, breite, hoehe, welt):
+def symbol_in_welt(x, y, welt):
     # Stelle sicher, dass sich die Position in der Welt befindet...
     x = zahl_zwischen(0, breite - 1, x)
     y = zahl_zwischen(0, hoehe - 1, y)
     return welt[y][x]
 
-def platziere_spieler(breite, hoehe, welt):
+def platziere_spieler(welt):
     while True:
         x = random.randint(0, breite - 1)
         y = random.randint(0, hoehe - 1)
-        symbol = symbol_in_welt(x, y, breite, hoehe, welt)
+        symbol = symbol_in_welt(x, y, welt)
         if symbol != symbol_wand:
             return (x, y)
 
-def generiere_volle_welt(breite, hoehe):
+def generiere_volle_welt():
     welt = []
     for y in range(hoehe):
         reihe = []
@@ -78,7 +81,7 @@ def generiere_volle_welt(breite, hoehe):
         welt.append(reihe)
     return welt
 
-def platziere_boden_flaechen(anzahl_boden_flaechen, breite, hoehe, welt):
+def platziere_boden_flaechen(welt, anzahl_boden_flaechen):
     richtungen = ["norden", "osten", "westen", "sueden"]    
     momentane_boden_flaechen = 0
 
@@ -107,7 +110,7 @@ def platziere_boden_flaechen(anzahl_boden_flaechen, breite, hoehe, welt):
             momentane_boden_flaechen += 1
     return welt
 
-def platziere_monster(anzahl_monster, breite, hoehe, welt):
+def platziere_monster(anzahl_monster, welt):
     richtungen = ["norden", "osten", "westen", "sueden"]    
     momentane_anzahl_monster = 0
     alle_monster = []
@@ -145,14 +148,13 @@ def existiert_monster_auf_position(x, y, monster):
     return False
 
 
-def generiere_welt(breite, hoehe, anzahl_boden_flaechen, anzahl_monster):
-    welt = generiere_volle_welt(breite, hoehe)
-    welt = platziere_boden_flaechen(anzahl_boden_flaechen, breite, hoehe, welt)
-    welt, monster = platziere_monster(anzahl_monster, breite, hoehe, welt)
+def generiere_welt(anzahl_boden_flaechen, anzahl_monster):
+    welt = generiere_volle_welt()
+    welt = platziere_boden_flaechen(welt, anzahl_boden_flaechen)
+    welt, monster = platziere_monster(anzahl_monster, welt)
     
     # Platziere Spieler
-
-    spieler["x"], spieler["y"] = platziere_spieler(breite, hoehe, welt)
+    spieler["x"], spieler["y"] = platziere_spieler(welt)
     return (welt, monster)
 
 
@@ -171,7 +173,7 @@ def zeichne_welt(welt, monster):
                 reihe_text = reihe_text + zeichen
         rprint(reihe_text)
 
-def bewege_spieler(aktion, breite, hoehe, welt):
+def bewege_spieler(aktion, welt):
     neues_x = spieler["x"]
     neues_y = spieler["y"]
     if aktion == "w":
@@ -185,13 +187,13 @@ def bewege_spieler(aktion, breite, hoehe, welt):
 
     neues_x = zahl_zwischen(0, breite - 1, neues_x)
     neues_y = zahl_zwischen(0, hoehe - 1, neues_y)
-    symbol = symbol_in_welt(neues_x, neues_y, breite, hoehe, welt)
+    symbol = symbol_in_welt(neues_x, neues_y, welt)
     spieler_darf_sich_bewegen = symbol != symbol_wand
     if spieler_darf_sich_bewegen:
         spieler["x"] = neues_x
         spieler["y"] = neues_y
 
-def bewege_monster(monster, breite, hoehe, welt):
+def bewege_monster(monster, welt):
     richtungen = ["norden", "osten", "westen", "sueden"]    
     for element in monster:
         neues_x = element["x"]
@@ -210,19 +212,17 @@ def bewege_monster(monster, breite, hoehe, welt):
         # Darf sich das Monster bewegen
         neues_x = zahl_zwischen(0, breite - 1, neues_x)
         neues_y = zahl_zwischen(0, hoehe - 1, neues_y)
-        symbol = symbol_in_welt(neues_x, neues_y, breite, hoehe, welt)
+        symbol = symbol_in_welt(neues_x, neues_y, welt)
         monster_darf_sich_bewegen = symbol != symbol_wand
         if monster_darf_sich_bewegen:
             element["x"] = neues_x
             element["y"] = neues_y
 
 def spiel_starten():
-    breite = 50
-    hoehe = 20
     anzahl_boden_flaechen = int(breite * hoehe * 0.5)
     anzahl_monster = 5
 
-    welt, monster = generiere_welt(breite, hoehe, anzahl_boden_flaechen, anzahl_monster)
+    welt, monster = generiere_welt(anzahl_boden_flaechen, anzahl_monster)
     spiel_beenden = False
     while not spiel_beenden:
         system(loeschte_terminal_inhalt)
@@ -232,8 +232,8 @@ def spiel_starten():
         aktion = console.input("Deine Aktion: ")
         aktion = aktion.lower()
         
-        bewege_spieler(aktion, breite, hoehe, welt)
-        bewege_monster(monster, breite, hoehe, welt)
+        bewege_spieler(aktion, welt)
+        bewege_monster(monster, welt)
     
 def spiel_laden():
     rprint("Spiel wird geladen...")
