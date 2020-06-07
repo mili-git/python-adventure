@@ -13,12 +13,13 @@ terminal_hoehe = console.size.height
 # Sollen die Zeichen als Emoji oder normale Text zeichen dargestellt werden
 emoji_support = True
 
+# Die unterstützten Emojis können unter folgendem Link gefunden werden: https://github.com/willmcgugan/rich/blob/master/rich/_emoji_codes.py
 symbol_boden = ":white_large_square:"
 symbol_wand = ":brick:"
 symbol_monster = ":dragon:"
 symbol_spieler = ":snake:"
 symbol_ziel = ":castle:"
-symbol_leben = ":heart:"
+symbol_leben = ":sparkling_heart:"
 
 if not emoji_support:
     symbol_boden = "."
@@ -49,6 +50,7 @@ spieler = {
 
 breite = 50
 hoehe = 15
+anzahl_aufnehmbare_leben = 5
 
 # Diese Funktion zentriert einen Text
 def zentriere_text(text):
@@ -72,7 +74,7 @@ def platziere_spieler(welt):
         x = random.randint(0, breite - 1)
         y = random.randint(0, hoehe - 1)
         symbol = symbol_in_welt(x, y, welt)
-        if symbol != symbol_wand and symbol != symbol_ziel and symbol != symbol_monster:
+        if symbol == symbol_boden:
             return (x, y)
 
 def platziere_ziel(welt):
@@ -93,6 +95,22 @@ def generiere_volle_welt():
             reihe.append(symbol_wand)
 
         welt.append(reihe)
+    return welt
+
+
+def platziere_leben(welt):
+    while True:
+        x = random.randint(0, breite - 1)
+        y = random.randint(0, hoehe - 1)
+        symbol = symbol_in_welt(x, y, welt)
+        # Das Leben kann nur auf einer Bodenfläche platziert werden...
+        if symbol == symbol_boden:
+            return (x, y)
+
+def platziere_aufnehmbare_leben(welt):
+    for i in range(anzahl_aufnehmbare_leben):
+        x, y = platziere_leben(welt)
+        welt[y][x] = symbol_leben
     return welt
 
 def platziere_boden_flaechen(welt, anzahl_boden_flaechen):
@@ -165,6 +183,7 @@ def existiert_monster_auf_position(x, y, monster):
 def generiere_welt(anzahl_boden_flaechen, anzahl_monster):
     welt = generiere_volle_welt()
     welt = platziere_boden_flaechen(welt, anzahl_boden_flaechen)
+    welt = platziere_aufnehmbare_leben(welt)
     welt = platziere_ziel(welt)
     welt, monster = platziere_monster(anzahl_monster, welt)
 
