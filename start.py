@@ -45,12 +45,14 @@ spieler = {
     "x": 5,
     "y": 12,
     "leben" : 3,
-    "anzahl_schritte": 0
+    # Die Anzahl Schritte werden als Liste gespeichert, jeder Index entspricht dabei einem Level
+    "anzahl_schritte": [0]
 }
 
 breite = 50
 hoehe = 15
 anzahl_aufnehmbare_leben = 5
+momentanes_level = 0 # Muss bei 0 beginnen, da es als Index in den "anzahl_schritten" verwendet wird.
 
 spiel_beenden = False
 
@@ -228,7 +230,7 @@ def bewege_spieler(aktion, welt, monster):
     spieler_darf_sich_bewegen = symbol != symbol_wand
     hat_sich_spieler_bewegt = spieler["x"] != neues_x or spieler["y"] != neues_y
     if spieler_darf_sich_bewegen and hat_sich_spieler_bewegt:
-        spieler["anzahl_schritte"] += 1
+        spieler["anzahl_schritte"][momentanes_level] += 1
         spieler["x"] = neues_x
         spieler["y"] = neues_y
 
@@ -242,6 +244,7 @@ def bewege_spieler(aktion, welt, monster):
         if existiert_monster_auf_position(spieler["x"], spieler["y"], monster):
             spieler["leben"] -= 1
             spieler["x"], spieler["y"] = platziere_spieler(welt)
+
 
 def bewege_monster(monster, welt):
     richtungen = ["norden", "osten", "westen", "sueden"]    
@@ -319,17 +322,33 @@ def zeige_hilfe_an():
         rprint(Panel(text))
         hilfe_schliessen = input("Um die Hilfe zu schliessen drücke bitte 'q': ").lower() == 'q'
 
+def generiere_welt_fuer_level():
+    if momentanes_level == 0:
+        anzahl_boden_flaechen = int(breite * hoehe * 0.5)
+        anzahl_monster = 5
+        return generiere_welt(anzahl_boden_flaechen, anzahl_monster)
+    else:
+        return None
 
+def zeige_alle_levels_geschafft_meldung():
+    rprint(Panel(zentriere_text("Du hast alle Levels die verfügbar sind gemeister, toll gemacht!!")))
+
+def zeige_gestorben_meldung():
+    rprint(Panel(zentriere_text("Leider hast du verloren, versuch doch dein Glück erneut!!")))
 
 def spiel_starten():
-    # Benutze die globale variable für spiel_beenden
-    global spiel_beenden
-    anzahl_boden_flaechen = int(breite * hoehe * 0.5)
-    anzahl_monster = 5
+    # Benutze die globale Variable momentanes level
+    global momentanes_level
 
-    welt, monster = generiere_welt(anzahl_boden_flaechen, anzahl_monster)
+    alle_level_gemeister = False
+    gestorben = False
+    
+    if generiere_welt_fuer_level() == None:
+        alle_level_gemeister = True
+    else:
+        welt, monster = generiere_welt_fuer_level()
 
-    while not spiel_beenden:
+    while not gestorben and not alle_level_gemeister:
         system(loeschte_terminal_inhalt)
         zeichne_welt(welt, monster)
         zeichne_spieler_informationen()
@@ -338,14 +357,41 @@ def spiel_starten():
         aktion = console.input("Deine Aktion: ")
         aktion = aktion.lower()
 
+        # Prüfe ob die Hilfe angezeigt werden soll...
         if aktion == "h":
             zeige_hilfe_an()
         
         bewege_spieler(aktion, welt, monster)
+
+        # Prüfe ob sich der Spieler bereits beim Schloss befindet...
+        if symbol_in_welt(spieler["x"], spieler["y"], welt) == symbol_ziel:
+            momentanes_level += 1
+            # Initialisiere die Schritte für das nächste Level
+            spieler["anzahl_schritte"].append(0)
+
+            # TODO: Speichere den momentanen Zustand in ein JSON...
+
+            # Prüfe ob der Spieler alle Level gemeistert hat
+            if generiere_welt_fuer_level() == None:
+                alle_level_gemeister = True
+            else:
+                # Generiere eine neue Welt mit Monstern etc.
+                welt, monster = generiere_welt_fuer_level()
+
         bewege_monster(monster, welt)
 
         # Prüfe ob das Spiel beendet ist -> Der Spieler hat keine Leben mehr
-        spiel_beenden = spieler["leben"] <= 0
+        gestorben = spieler["leben"] <= 0
+
+    # Prüfe den Grund für das Beenden des Levels und zeige eine entsprechende Meldung an:
+    # a) Der Spieler hat alle Levels gemeister
+    # b) Der Spieler ist gestorben
+    if alle_level_gemeister:
+        zeige_alle_levels_geschafft_meldung()
+    elif gestorben:
+        zeige_gestorben_meldung()
+
+    start()
 
     
 def spiel_laden():
@@ -354,20 +400,23 @@ def spiel_laden():
 def highscore_anzeigen():
     rprint("Highscore wird angezeigt...")
 
-# Zeige Hauptmenu an
-rprint(Panel(zentriere_text(menu_text), style="#F08080"))
+def start():
+    # Zeige Hauptmenu an
+    rprint(Panel(zentriere_text(menu_text), style="#F08080"))
 
-# Werte die Auswahl für das Hauptmenü aus...
-auswahl = ""
-gueltige_eingabe = False
-while not gueltige_eingabe:
-    auswahl = console.input("Bitte triff eine Auswahl: ")
-    gueltige_eingabe = auswahl == "1" or auswahl == "2" or auswahl == "3"
+    # Werte die Auswahl für das Hauptmenü aus...
+    auswahl = ""
+    gueltige_eingabe = False
+    while not gueltige_eingabe:
+        auswahl = console.input("Bitte triff eine Auswahl: ")
+        gueltige_eingabe = auswahl == "1" or auswahl == "2" or auswahl == "3"
 
-if auswahl == "1":
-    zeige_hilfe_an()
-    spiel_starten()
-elif auswahl == "2":
-    spiel_laden()
-elif auswahl == "3":
-    highscore_anzeigen()
+    if auswahl == "1":
+        zeige_hilfe_an()
+        spiel_starten()
+    elif auswahl == "2":
+        spiel_laden()
+    elif auswahl == "3":
+        highscore_anzeigen()
+
+start()
