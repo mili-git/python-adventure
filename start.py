@@ -18,6 +18,7 @@ symbol_wand = ":brick:"
 symbol_monster = ":dragon:"
 symbol_spieler = ":snake:"
 symbol_ziel = ":castle:"
+symbol_leben = ":heart:"
 
 if not emoji_support:
     symbol_boden = "."
@@ -25,6 +26,7 @@ if not emoji_support:
     symbol_monster = "m"
     symbol_spieler = "@"
     symbol_ziel = "%"
+    symbol_leben = "+"
 
 # https://stackoverflow.com/questions/8907236/center-aligning-text-on-console-in-python
 zentriere_text_ausdruck = '{:^' + str(terminal_breite) + '}'
@@ -40,11 +42,13 @@ if name == 'nt':
 spieler = {
     "zeichen": symbol_spieler,
     "x": 5,
-    "y": 12
+    "y": 12,
+    "leben" : 3,
+    "anzahl_schritte": 0
 }
 
 breite = 50
-hoehe = 20
+hoehe = 15
 
 # Diese Funktion zentriert einen Text
 def zentriere_text(text):
@@ -201,7 +205,9 @@ def bewege_spieler(aktion, welt):
     neues_y = zahl_zwischen(0, hoehe - 1, neues_y)
     symbol = symbol_in_welt(neues_x, neues_y, welt)
     spieler_darf_sich_bewegen = symbol != symbol_wand
-    if spieler_darf_sich_bewegen:
+    hat_sich_spieler_bewegt = spieler["x"] != neues_x or spieler["y"] != neues_y
+    if spieler_darf_sich_bewegen and hat_sich_spieler_bewegt:
+        spieler["anzahl_schritte"] += 1
         spieler["x"] = neues_x
         spieler["y"] = neues_y
 
@@ -230,6 +236,25 @@ def bewege_monster(monster, welt):
             element["x"] = neues_x
             element["y"] = neues_y
 
+def zeichne_leben():
+    lebens_anzeige = "Leben Spieler: [bold red]"
+    for i in range(spieler["leben"]):
+        lebens_anzeige = lebens_anzeige + symbol_leben + " "
+    lebens_anzeige = lebens_anzeige + "[/bold red]"
+    return lebens_anzeige
+
+def zeichne_spieler_informationen():
+    spieler_informationen = ""
+
+    # Zeichne das Leben des Spielers
+    spieler_informationen = spieler_informationen + zeichne_leben()
+    
+    # Zeichne die Anzahl Schritte, welcher der Spieler vorgenommen hat (wird für High Score verwendet.)
+    spieler_informationen = spieler_informationen + "\n\rAnzahl Spielzüge: " + str(spieler["anzahl_schritte"])
+
+    rprint(Panel(spieler_informationen))
+
+
 def spiel_starten():
     anzahl_boden_flaechen = int(breite * hoehe * 0.5)
     anzahl_monster = 5
@@ -239,6 +264,7 @@ def spiel_starten():
     while not spiel_beenden:
         system(loeschte_terminal_inhalt)
         zeichne_welt(welt, monster)
+        zeichne_spieler_informationen()
 
         # Werte Aktion aus...
         aktion = console.input("Deine Aktion: ")
@@ -246,6 +272,8 @@ def spiel_starten():
         
         bewege_spieler(aktion, welt)
         bewege_monster(monster, welt)
+
+
     
 def spiel_laden():
     rprint("Spiel wird geladen...")
