@@ -72,7 +72,7 @@ def platziere_spieler(welt):
         x = random.randint(0, breite - 1)
         y = random.randint(0, hoehe - 1)
         symbol = symbol_in_welt(x, y, welt)
-        if symbol != symbol_wand and symbol != symbol_ziel:
+        if symbol != symbol_wand and symbol != symbol_ziel and symbol != symbol_monster:
             return (x, y)
 
 def platziere_ziel(welt):
@@ -189,7 +189,7 @@ def zeichne_welt(welt, monster):
                 reihe_text = reihe_text + zeichen
         rprint(reihe_text)
 
-def bewege_spieler(aktion, welt):
+def bewege_spieler(aktion, welt, monster):
     neues_x = spieler["x"]
     neues_y = spieler["y"]
     if aktion == "w":
@@ -210,6 +210,11 @@ def bewege_spieler(aktion, welt):
         spieler["anzahl_schritte"] += 1
         spieler["x"] = neues_x
         spieler["y"] = neues_y
+
+        # Prüfe ob der Spieler mit einem Monster kollidiert hat...
+        if existiert_monster_auf_position(spieler["x"], spieler["y"], monster):
+            spieler["leben"] -= 1
+            spieler["x"], spieler["y"] = platziere_spieler(welt)
 
 def bewege_monster(monster, welt):
     richtungen = ["norden", "osten", "westen", "sueden"]    
@@ -232,9 +237,16 @@ def bewege_monster(monster, welt):
         neues_y = zahl_zwischen(0, hoehe - 1, neues_y)
         symbol = symbol_in_welt(neues_x, neues_y, welt)
         monster_darf_sich_bewegen = symbol != symbol_wand
-        if monster_darf_sich_bewegen:
+        monster_hat_sich_bewegt = element["x"] != neues_x or element["y"] != neues_y
+        if monster_darf_sich_bewegen and monster_hat_sich_bewegt:
             element["x"] = neues_x
             element["y"] = neues_y
+
+            # Prüfe ob sich der Spieler auf dieser Position befindet und ziehe Leben ab
+            if element["x"] == spieler["x"] and element["y"] == spieler["y"]:
+                spieler["leben"] -= 1
+                spieler["x"], spieler["y"] = platziere_spieler(welt)
+
 
 def zeichne_leben():
     lebens_anzeige = "Leben Spieler: [bold red]"
@@ -270,7 +282,7 @@ def spiel_starten():
         aktion = console.input("Deine Aktion: ")
         aktion = aktion.lower()
         
-        bewege_spieler(aktion, welt)
+        bewege_spieler(aktion, welt, monster)
         bewege_monster(monster, welt)
 
 
