@@ -68,8 +68,18 @@ def platziere_spieler(welt):
         x = random.randint(0, breite - 1)
         y = random.randint(0, hoehe - 1)
         symbol = symbol_in_welt(x, y, welt)
-        if symbol != symbol_wand:
+        if symbol != symbol_wand and symbol != symbol_ziel:
             return (x, y)
+
+def platziere_ziel(welt):
+    while True:
+        x = random.randint(0, breite - 1)
+        y = random.randint(0, hoehe - 1)
+        symbol = symbol_in_welt(x, y, welt)
+        # Das Ziel kann nur auf einer Bodenfläche platziert werden...
+        if symbol == symbol_boden:
+            welt[y][x] = symbol_ziel
+            return welt
 
 def generiere_volle_welt():
     welt = []
@@ -151,10 +161,12 @@ def existiert_monster_auf_position(x, y, monster):
 def generiere_welt(anzahl_boden_flaechen, anzahl_monster):
     welt = generiere_volle_welt()
     welt = platziere_boden_flaechen(welt, anzahl_boden_flaechen)
+    welt = platziere_ziel(welt)
     welt, monster = platziere_monster(anzahl_monster, welt)
-    
+
     # Platziere Spieler
     spieler["x"], spieler["y"] = platziere_spieler(welt)
+
     return (welt, monster)
 
 
