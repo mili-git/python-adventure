@@ -230,6 +230,12 @@ def bewege_spieler(aktion, welt, monster):
         spieler["x"] = neues_x
         spieler["y"] = neues_y
 
+        # Prüfe ob der Spieler ein Leben aufgenommen hat
+        if symbol_in_welt(spieler["x"], spieler["y"], welt) == symbol_leben:
+            spieler["leben"] += 1
+            # Entferne das Leben aus der Welt
+            welt[spieler["y"]][spieler["x"]] = symbol_boden
+
         # Prüfe ob der Spieler mit einem Monster kollidiert hat...
         if existiert_monster_auf_position(spieler["x"], spieler["y"], monster):
             spieler["leben"] -= 1
