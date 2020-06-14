@@ -13,7 +13,7 @@ terminal_breite = console.size.width
 terminal_hoehe = console.size.height
 
 # Sollen die Zeichen als Emoji oder normale Text zeichen dargestellt werden
-emoji_support = True
+emoji_support = console.input("Willst du mit Emoji Support spielen (j/n?) ").lower() == "j"
 
 # Die unterstützten Emojis können unter folgendem Link gefunden werden: https://github.com/willmcgugan/rich/blob/master/rich/_emoji_codes.py
 symbol_boden = ":white_large_square:"
@@ -337,12 +337,20 @@ def zeige_hilfe_an():
 
 def generiere_welt_fuer_spieler(spieler):
     if spieler["momentanes_level"] == 0:
-        anzahl_boden_flaechen = int(breite * hoehe * 0.45)
-        anzahl_monster = 10
+        anzahl_boden_flaechen = int(breite * hoehe * 0.70)
+        anzahl_monster = 5
         return generiere_welt(spieler, anzahl_boden_flaechen, anzahl_monster)
     elif spieler["momentanes_level"] == 1:
-        anzahl_boden_flaechen = int(breite * hoehe * 0.85)
+        anzahl_boden_flaechen = int(breite * hoehe * 0.60)
+        anzahl_monster = 7
+        return generiere_welt(spieler, anzahl_boden_flaechen, anzahl_monster)
+    elif spieler["momentanes_level"] == 2:
+        anzahl_boden_flaechen = int(breite * hoehe * 0.50)
         anzahl_monster = 8
+        return generiere_welt(spieler, anzahl_boden_flaechen, anzahl_monster)
+    elif spieler["momentanes_level"] == 3:
+        anzahl_boden_flaechen = int(breite * hoehe * 0.40)
+        anzahl_monster = 9
         return generiere_welt(spieler, anzahl_boden_flaechen, anzahl_monster)
     else:
         return None
