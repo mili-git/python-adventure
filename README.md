@@ -25,6 +25,7 @@ Folgende Befehle können während des Spiels in der Kommandozeile eingegeben wer
 | d         | Der Spieler bewegt sich nach *rechts*                                                  |
 | w         | Der Spieler bewegt sich nach *oben*                                                    |
 | s         | Der Spieler bewegt sich nach *unten*                                                   |
+| h 		| Hilfe wird dargestellt      			                                                 |
 
 
 In einem *Hauptmenü* sind folgende Optionen verfügbar:
