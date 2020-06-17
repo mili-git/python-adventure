@@ -1,8 +1,10 @@
-from rich.console import Console
+#Rich-Bibliothek installiert https://github.com/willmcgugan/rich
+from rich.console import Console 
 from rich.panel import Panel
 from rich.table import Table
 from rich import print as rprint
-from os import system, name
+#system = damit clear funktion ausgeführt werden kann, name = name Betriebssystem
+from os import system, name 
 import random
 import json
 
@@ -108,7 +110,7 @@ def generiere_volle_welt():
         welt.append(reihe)
     return welt
 
-
+#1 Leben platzieren
 def platziere_leben(welt):
     while True:
         x = random.randint(0, breite - 1)
@@ -118,12 +120,14 @@ def platziere_leben(welt):
         if symbol == symbol_boden:
             return (x, y)
 
+#Mehrere Leben platzieren
 def platziere_aufnehmbare_leben(welt):
     for i in range(anzahl_aufnehmbare_leben):
         x, y = platziere_leben(welt)
         welt[y][x] = symbol_leben
     return welt
 
+#Algorythmus zu generieren von Bodenflächen
 def platziere_boden_flaechen(welt, anzahl_boden_flaechen):
     richtungen = ["norden", "osten", "westen", "sueden"]    
     momentane_boden_flaechen = 0
@@ -188,31 +192,27 @@ def existiert_monster_auf_position(x, y, monster):
     for element in monster:
         if element["y"] == y and element["x"] == x:
             return True
+    #Kein Monster auf Position x,y
     return False
 
 
 def generiere_welt(spieler, anzahl_boden_flaechen, anzahl_monster):
-    print("Volle Welt wird generiert...")
     welt = generiere_volle_welt()
-    print("Bodenflächen werden platziert...")
     welt = platziere_boden_flaechen(welt, anzahl_boden_flaechen)
-    print("Aufnehmbare Leben werden platziert...")
     welt = platziere_aufnehmbare_leben(welt)
-    print("Ziel wird platziert")
     welt = platziere_ziel(welt)
-    print("Platziere monster...")
     welt, monster = platziere_monster(anzahl_monster, welt)
 
     # Platziere Spieler
-    print("Platziere Spieler...")
     spieler["x"], spieler["y"] = platziere_spieler(welt)
-    print("Welt ist fertig generiert...")
     return (spieler, welt, monster)
 
 
 def zeichne_welt(welt, monster, spieler):
+    #von oben nach unten
     for y, reihe in enumerate(welt):
         reihe_text = ""
+        #von rechts nach links
         for x, zeichen in enumerate(reihe):
             # Zeichne Spieler
             if x == spieler["x"] and y == spieler["y"]:
@@ -320,6 +320,7 @@ def hilfe_text():
     hilfe_text = hilfe_text + "Eine High Score Übersicht mit den Anzahl Schritten pro Level kannst du unter [bold]Highscore ansehen[/bold] im Hauptmenü ansehen.\n\r"
     hilfe_text = hilfe_text + "Dein Fortschritt wird jeweils beim Erreichen des Schloss gespeichert, streng dich also an!!\n\r"
     hilfe_text = hilfe_text + "Jedes Level ist zufalls generiert, es stehen dir folgende Befehle zur Auswahl:\n\r"
+    #bbCode
     hilfe_text = hilfe_text + "Mit [bold]w[/bold] bewegst du dich nach oben\n\r"
     hilfe_text = hilfe_text + "Mit [bold]a[/bold] bewegst du dich nach links\n\r"
     hilfe_text = hilfe_text + "Mit [bold]s[/bold] bewegst du dich nach unten\n\r"
